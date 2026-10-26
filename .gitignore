@@ -1,0 +1,17 @@
+/.env
+/.env.*
+!/.env.example
+/vendor/
+/bootstrap/cache/*.php
+/storage/**/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/.phpunit.cache/
+/.phpunit.result.cache
+*.sql.gz
+*.dump
+/.runtime/
+/.tools/
+/submission.zip
+/laravel_backend_assessment_final.md

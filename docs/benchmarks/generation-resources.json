@@ -1,0 +1,10 @@
+{
+  "started_at": "2026-10-25T00:25:56.100782+00:00",
+  "finished_at": "2026-10-25T00:31:38.508920+00:00",
+  "elapsed_seconds": 342.41,
+  "php_max_rss_kib": 54400,
+  "user_cpu_seconds": 0.47685099999999997,
+  "system_cpu_seconds": 0.17018999999999998,
+  "exit_code": 0,
+  "command": "php artisan dataset:generate --patients=500000 --batch=2000"
+}

@@ -1,0 +1,28 @@
+Captured at: 2026-10-25T00:58:39+00:00
+PostgreSQL: 17.11 (Debian 17.11-0+deb13u1)
+service_code: LAB-001
+patients: 500000
+orders: 2000000
+order_items: 8000000
+payments: 1000000
+audit_logs: 5000000
+department_order_processings: 4000000
+SELECT o.* FROM orders o
+WHERE o.status = 'paid' AND o.created_at >= '2026-01-01' AND o.created_at < '2026-02-01'
+AND EXISTS (SELECT 1 FROM order_items oi WHERE oi.order_id = o.id AND oi.service_code = ?)
+ORDER BY o.created_at DESC, o.id DESC LIMIT 21
+Limit  (cost=0.86..77.56 rows=21 width=50) (actual time=0.663..4.760 rows=21 loops=1)
+  Buffers: shared hit=64 read=42
+  ->  Nested Loop Semi Join  (cost=0.86..203472.81 rows=55707 width=50) (actual time=0.662..4.756 rows=21 loops=1)
+        Buffers: shared hit=64 read=42
+        ->  Index Scan using orders_status_created_idx on orders o  (cost=0.43..76366.78 rows=173868 width=50) (actual time=0.020..0.071 rows=21 loops=1)
+              Index Cond: (((status)::text = 'paid'::text) AND (created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-02-01 00:00:00'::timestamp without time zone))
+              Buffers: shared hit=24
+        ->  Index Only Scan using items_service_code_order_idx on order_items oi  (cost=0.43..1.20 rows=3 width=8) (actual time=0.222..0.222 rows=1 loops=21)
+              Index Cond: ((service_code = 'LAB-001'::text) AND (order_id = o.id))
+              Heap Fetches: 0
+              Buffers: shared hit=40 read=42
+Planning:
+  Buffers: shared hit=97
+Planning Time: 0.502 ms
+Execution Time: 4.777 ms

@@ -1,0 +1,90 @@
+@base = http://localhost:8000/api
+@patient = 1
+@order = 1
+@department = 1
+@service = 1
+
+### Register patient
+POST {{base}}/patients
+Accept: application/json
+Content-Type: application/json
+
+{"full_name":"Example Patient","date_of_birth":"1990-01-01","sex":"unknown"}
+
+### Patient details
+GET {{base}}/patients/{{patient}}
+Accept: application/json
+
+### Paginated patient orders
+GET {{base}}/patients/{{patient}}/orders?per_page=20&page=1
+Accept: application/json
+
+### Create department
+POST {{base}}/departments
+Accept: application/json
+Content-Type: application/json
+
+{"code":"DENTAL","name":"Dental","is_active":true}
+
+### List departments
+GET {{base}}/departments
+Accept: application/json
+
+### Department activation
+PATCH {{base}}/departments/{{department}}
+Accept: application/json
+Content-Type: application/json
+
+{"is_active":true}
+
+### Create service (change department ID as needed)
+POST {{base}}/services
+Accept: application/json
+Content-Type: application/json
+
+{"service_code":"DENT-001","name":"Dental Review","department_id":5,"unit_price":"750.00"}
+
+### Filter services
+GET {{base}}/services?department_code=PATHO&is_active=1
+Accept: application/json
+
+### Edit service price
+PATCH {{base}}/services/{{service}}
+Accept: application/json
+Content-Type: application/json
+
+{"unit_price":"550.25"}
+
+### Deactivate service
+PATCH {{base}}/services/{{service}}
+Accept: application/json
+Content-Type: application/json
+
+{"is_active":false}
+
+### Create multi-department order
+POST {{base}}/orders
+Accept: application/json
+Content-Type: application/json
+
+{"patient_id":{{patient}},"items":[{"service_code":"LAB-001","quantity":1},{"service_code":"RAD-001","quantity":1}]}
+
+### Pay; repeat same request to replay
+POST {{base}}/orders/{{order}}/pay
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: editor-demo-1
+
+{}
+
+### Rollback simulation on a NEW unpaid order; enable local flag first
+POST {{base}}/orders/{{order}}/pay
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: rollback-example
+
+{"simulate_failure":true}
+
+### Filter and paginate orders
+GET {{base}}/orders?status=paid&from=2026-01-01&to=2026-01-31&service_code=LAB-001&department_code=PATHO&per_page=20
+Accept: application/json

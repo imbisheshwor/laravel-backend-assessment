@@ -1,0 +1,19 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - app
+        - bootstrap/app.php
+        - config
+        - database
+        - public
+        - routes
+        - scripts
+        - tests
+    tmpDir: .runtime/phpstan-cache
+    # The migration contains PostgreSQL DDL. Model property PHPDocs describe its
+    # schema; Larastan's PHP migration scanner cannot infer raw SQL definitions.
+    disableMigrationScan: true
+    disableSchemaScan: true

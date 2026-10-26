@@ -1,0 +1,6 @@
+.git
+.env
+vendor
+.runtime
+.tools
+storage/logs

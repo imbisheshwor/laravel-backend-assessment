@@ -1,0 +1,29 @@
+{
+    "captured_at": "2026-10-25T00:32:41+00:00",
+    "postgresql": "17.11 (Debian 17.11-0+deb13u1)",
+    "database": "hmis",
+    "counts": {
+        "departments": 4,
+        "services": 4,
+        "patients": 500000,
+        "orders": 2000000,
+        "order_items": 8000000,
+        "payments": 1000000,
+        "audit_logs": 5000000,
+        "processing_outbox": 1000000,
+        "department_order_processings": 4000000
+    },
+    "core_records": 10500000,
+    "counted_records": 21500008,
+    "large_dataset": true,
+    "violations": {
+        "orders_missing_items_or_wrong_totals": 0,
+        "invalid_payment_state_or_amount": 0,
+        "invalid_outbox_state": 0,
+        "unexpected_department_handoffs": 0,
+        "acknowledged_handoffs_missing": 0,
+        "orders_missing_creation_audit": 0,
+        "paid_orders_missing_success_audit": 0
+    },
+    "passed": true
+}
