@@ -243,7 +243,16 @@ php scripts/concurrent-payments.php --order=ANOTHER_ORDER_ID --workers=20 --mode
 ## Large dataset
 
 ```bash
-php artisan dataset:generate --patients=500000 --batch=2000
+# Ultra-fast bulk generation (Recommended):
+php artisan dataset:generate --patients=500000 --turbo
+
+# Or directly via db:seed:
+php artisan db:seed --class=LargeDatasetSeeder
+
+# Batched generation (incremental transactions):
+php artisan dataset:generate --patients=500000 --batch=10000
+
+# Verification and query plan:
 php artisan dataset:verify --require-large
 php artisan orders:explain --require-large
 # Run the sequence together:
@@ -286,24 +295,26 @@ LIMIT 21;
 ```
 
 <!-- benchmark:start -->
-Dataset: 10,500,000 core rows. Planning: 0.502 ms. Execution: 4.777 ms. Indexes: `orders_status_created_idx`, `items_service_code_order_idx`. No sort was needed.
+Dataset: 10,500,000 core rows. Planning: 6.672 ms. Execution: 15.857 ms. Indexes: `orders_status_created_idx`, `items_service_code_order_idx`. No sort was needed.
 
 ```text
-Limit  (cost=0.86..77.56 rows=21 width=50) (actual time=0.663..4.760 rows=21 loops=1)
-  Buffers: shared hit=64 read=42
-  ->  Nested Loop Semi Join  (cost=0.86..203472.81 rows=55707 width=50) (actual time=0.662..4.756 rows=21 loops=1)
-        Buffers: shared hit=64 read=42
-        ->  Index Scan using orders_status_created_idx on orders o  (cost=0.43..76366.78 rows=173868 width=50) (actual time=0.020..0.071 rows=21 loops=1)
+Limit  (cost=0.86..78.38 rows=21 width=51) (actual time=2.437..15.826 rows=21.00 loops=1)
+  Buffers: shared hit=43 read=65
+  ->  Nested Loop Semi Join  (cost=0.86..212932.60 rows=57680 width=51) (actual time=2.436..15.816 rows=21.00 loops=1)
+        Buffers: shared hit=43 read=65
+        ->  Index Scan using orders_status_created_idx on orders o  (cost=0.43..85783.39 rows=172029 width=51) (actual time=1.243..1.989 rows=21.00 loops=1)
               Index Cond: (((status)::text = 'paid'::text) AND (created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-02-01 00:00:00'::timestamp without time zone))
-              Buffers: shared hit=24
-        ->  Index Only Scan using items_service_code_order_idx on order_items oi  (cost=0.43..1.20 rows=3 width=8) (actual time=0.222..0.222 rows=1 loops=21)
+              Index Searches: 1
+              Buffers: shared read=24
+        ->  Index Only Scan using items_service_code_order_idx on order_items oi  (cost=0.43..1.21 rows=3 width=8) (actual time=0.655..0.655 rows=1.00 loops=21)
               Index Cond: ((service_code = 'LAB-001'::text) AND (order_id = o.id))
               Heap Fetches: 0
-              Buffers: shared hit=40 read=42
+              Index Searches: 21
+              Buffers: shared hit=43 read=41
 Planning:
-  Buffers: shared hit=97
-Planning Time: 0.502 ms
-Execution Time: 4.777 ms
+  Buffers: shared hit=92 read=17
+Planning Time: 6.672 ms
+Execution Time: 15.857 ms
 ```
 <!-- benchmark:end -->
 

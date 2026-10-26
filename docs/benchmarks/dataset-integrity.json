@@ -1,7 +1,7 @@
 {
-    "captured_at": "2026-10-25T00:32:41+00:00",
-    "postgresql": "17.11 (Debian 17.11-0+deb13u1)",
-    "database": "hmis",
+    "captured_at": "2026-10-26T11:58:11+00:00",
+    "postgresql": "18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)",
+    "database": "dev_db",
     "counts": {
         "departments": 4,
         "services": 4,
@@ -9,13 +9,14 @@
         "orders": 2000000,
         "order_items": 8000000,
         "payments": 1000000,
-        "audit_logs": 5000000,
+        "audit_logs": 3000000,
         "processing_outbox": 1000000,
         "department_order_processings": 4000000
     },
     "core_records": 10500000,
-    "counted_records": 21500008,
+    "counted_records": 19500008,
     "large_dataset": true,
+    "scoped_to_days": null,
     "violations": {
         "orders_missing_items_or_wrong_totals": 0,
         "invalid_payment_state_or_amount": 0,

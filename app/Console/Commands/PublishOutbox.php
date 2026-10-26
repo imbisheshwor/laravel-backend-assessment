@@ -18,11 +18,22 @@ class PublishOutbox extends Command
             $this->error('limit must be between 1 and 100000');
             return self::FAILURE;
         }
-        $rows = DB::table('processing_outbox')->whereNull('processed_at')->orderBy('id')->limit($limit)->get(['order_id']);
-        foreach ($rows as $row) {
-            ProcessOrderDepartments::dispatch($row->order_id)->afterCommit();
-        }
-        $this->info('Published '.$rows->count().' pending orders. Re-publication is safe.');
+
+        // cursor() streams rows one at a time — O(1) PHP memory regardless of how
+        // many rows are pending. Critical when the queue worker is down for hours
+        // and thousands of outbox rows accumulate.
+        $count = 0;
+        DB::table('processing_outbox')
+            ->whereNull('processed_at')
+            ->orderBy('id')
+            ->limit($limit)
+            ->cursor()
+            ->each(function ($row) use (&$count) {
+                ProcessOrderDepartments::dispatch($row->order_id)->afterCommit();
+                $count++;
+            });
+
+        $this->info("Published {$count} pending orders. Re-publication is safe.");
         return self::SUCCESS;
     }
 }

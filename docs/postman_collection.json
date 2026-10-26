@@ -1,0 +1,702 @@
+{
+  "info": {
+    "name": "Hospital HMIS API",
+    "description": "Complete REST API collection for the Hospital Management Information System (HMIS). Covers patient registration, department & service master management, service orders, and payments with idempotency and concurrency support.\n\n**Base URL:** `http://localhost:8000`\n\n**Required Headers on all requests:**\n- `Accept: application/json`\n- `Content-Type: application/json`\n\n**Setup:** Import this collection, set the `base_url` variable to your server address.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "hmis-api-collection-v1"
+  },
+  "variable": [
+    { "key": "base_url",      "value": "http://localhost:8000", "type": "string" },
+    { "key": "patient_id",    "value": "1",  "type": "string" },
+    { "key": "order_id",      "value": "1",  "type": "string" },
+    { "key": "department_id", "value": "1",  "type": "string" },
+    { "key": "service_id",    "value": "1",  "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Patients",
+      "description": "Register patients and view their details and order history.",
+      "item": [
+        {
+          "name": "Register Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/patients", "host": ["{{base_url}}"], "path": ["api", "patients"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Ram Bahadur Thapa\",\n  \"date_of_birth\": \"1985-07-21\",\n  \"sex\": \"male\",\n  \"phone\": \"+977-9841000001\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Register a new patient.\n\n**Required fields:** `full_name`, `date_of_birth` (YYYY-MM-DD, past or today), `sex` (female/male/other/unknown)\n**Optional:** `phone`\n\nReturns `201` with the created patient record."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"full_name\": \"Ram Bahadur Thapa\",\n    \"date_of_birth\": \"1985-07-21\",\n    \"sex\": \"male\",\n    \"phone\": \"+977-9841000001\",\n    \"created_at\": \"2026-10-26T05:16:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:16:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The full name field is required.\",\n  \"errors\": {\n    \"full_name\": [\"The full name field is required.\"],\n    \"date_of_birth\": [\"The date of birth field is required.\"],\n    \"sex\": [\"The sex field is required.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Patient",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/patients/{{patient_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patients", "{{patient_id}}"]
+            },
+            "description": "Retrieve a single patient by ID. Returns `404` if not found."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"full_name\": \"Ram Bahadur Thapa\",\n    \"date_of_birth\": \"1985-07-21\",\n    \"sex\": \"male\",\n    \"phone\": \"+977-9841000001\",\n    \"created_at\": \"2026-10-26T05:16:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:16:00.000000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Patient Order History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/patients/{{patient_id}}/orders?per_page=20&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patients", "{{patient_id}}", "orders"],
+              "query": [
+                { "key": "status",          "value": "paid",       "disabled": true },
+                { "key": "from",            "value": "2026-01-01", "disabled": true },
+                { "key": "to",              "value": "2026-12-31", "disabled": true },
+                { "key": "service_code",    "value": "LAB-001",   "disabled": true },
+                { "key": "department_code", "value": "PATHO",     "disabled": true },
+                { "key": "per_page",        "value": "20" },
+                { "key": "page",            "value": "1" }
+              ]
+            },
+            "description": "Paginated order list for a patient. Supports all the same filters as GET /api/orders.\n\nToggle optional query params as needed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "description": "Create, list, and update operational departments (PATHO, RADIO, etc.).",
+      "item": [
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/departments", "host": ["{{base_url}}"], "path": ["api", "departments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DENTAL\",\n  \"name\": \"Dental Department\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a new department.\n\n- `code`: Unique, uppercase letters/digits/underscore/hyphen, e.g. `DENTAL`\n- `name`: Human-readable name\n- `is_active`: Optional, defaults to `true`"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"code\": \"DENTAL\",\n    \"name\": \"Dental Department\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-26T05:18:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:18:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "422 Duplicate Code",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The code has already been taken.\",\n  \"errors\": {\n    \"code\": [\"The code has already been taken.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/departments?per_page=20&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments"],
+              "query": [
+                { "key": "per_page", "value": "20" },
+                { "key": "page",     "value": "1" }
+              ]
+            },
+            "description": "Paginated list of all departments ordered by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/departments/{{department_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "{{department_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dental & Oral Health\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partially update a department. All fields are optional.\n\n**Warning:** Deactivating a department (`is_active: false`) prevents new services from being added and new orders from including its services. Existing orders and snapshots are unaffected."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"code\": \"DENTAL\",\n    \"name\": \"Dental & Oral Health\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-26T05:18:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:20:00.000000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate Department",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/departments/{{department_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "{{department_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Deactivate a department. New services cannot be added and new orders cannot include its services. Historical data is preserved."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "description": "Manage the service master — service codes, prices, and active flags. Services drive order pricing.",
+      "item": [
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services", "host": ["{{base_url}}"], "path": ["api", "services"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_code\": \"DENT-001\",\n  \"name\": \"Dental Consultation\",\n  \"department_id\": 1,\n  \"unit_price\": \"750.00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a new service in the service master.\n\n- `service_code`: Unique, uppercase letters/digits/underscore/hyphen\n- `department_id`: Must reference an **active** department\n- `unit_price`: Decimal **string** (e.g. `\"750.00\"`), must be > 0, max `99999999.99`\n\n**Note:** Use the department `id` (integer), not the department `code`."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 5,\n    \"service_code\": \"DENT-001\",\n    \"name\": \"Dental Consultation\",\n    \"department_id\": 5,\n    \"unit_price\": \"750.00\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-26T05:20:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:20:00.000000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Services",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/services?department_code=PATHO&is_active=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services"],
+              "query": [
+                { "key": "department_code", "value": "PATHO" },
+                { "key": "is_active",       "value": "1" },
+                { "key": "per_page",        "value": "20" },
+                { "key": "page",            "value": "1", "disabled": true }
+              ]
+            },
+            "description": "List services with optional filters.\n\n- `department_code`: Filter by department code (e.g. `PATHO`, `RADIO`)\n- `is_active`: `1`/`true` for active, `0`/`false` for inactive\n\nResponse includes nested `department` relation."
+          },
+          "response": []
+        },
+        {
+          "name": "List All Services (No Filter)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/services?per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services"],
+              "query": [
+                { "key": "per_page", "value": "20" }
+              ]
+            },
+            "description": "List all services (active and inactive) across all departments."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Service Price",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "{{service_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unit_price\": \"550.25\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Update a service's price. All PATCH fields are optional.\n\n**Important:** This does NOT reprice existing orders. Each order item stores a price snapshot taken at creation time."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"service_code\": \"LAB-001\",\n    \"name\": \"Complete Blood Count (CBC)\",\n    \"department_id\": 1,\n    \"unit_price\": \"550.25\",\n    \"is_active\": true,\n    \"created_at\": \"2026-10-26T05:00:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:30:00.000000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate Service",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "{{service_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Deactivate a service. Preferred over deletion to preserve past billing history. Deactivated services cannot be added to new orders."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "Create service orders and search/filter the order history.",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"items\": [\n    {\"service_code\": \"LAB-001\", \"quantity\": 2},\n    {\"service_code\": \"RAD-001\", \"quantity\": 1}\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a service order for a patient.\n\n**Key rules:**\n- `patient_id` must exist\n- Each `service_code` must exist, and both its service and department must be active\n- `quantity` must be a JSON integer (not string, not float), between 1 and 10\n- No duplicate `service_code` values in items\n- Do NOT send `unit_price` or `total` — these are server-calculated and client-supplied values are rejected\n- If any item fails validation, the whole order is rejected (no partial inserts)\n\nThe server looks up prices from the service master and stores a snapshot per item."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 42,\n    \"patient_id\": 1,\n    \"status\": \"unpaid\",\n    \"total\": \"2200.00\",\n    \"paid_at\": null,\n    \"created_at\": \"2026-10-26T05:25:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:25:00.000000Z\",\n    \"items\": [\n      {\n        \"id\": 83,\n        \"order_id\": 42,\n        \"service_id\": 1,\n        \"department_id\": 1,\n        \"service_code\": \"LAB-001\",\n        \"service_name\": \"Complete Blood Count (CBC)\",\n        \"unit_price\": \"500.00\",\n        \"quantity\": 2,\n        \"line_total\": \"1000.00\",\n        \"created_at\": \"2026-10-26T05:25:00.000000Z\",\n        \"updated_at\": \"2026-10-26T05:25:00.000000Z\"\n      },\n      {\n        \"id\": 84,\n        \"order_id\": 42,\n        \"service_id\": 2,\n        \"department_id\": 2,\n        \"service_code\": \"RAD-001\",\n        \"service_name\": \"X-Ray Chest\",\n        \"unit_price\": \"1200.00\",\n        \"quantity\": 1,\n        \"line_total\": \"1200.00\",\n        \"created_at\": \"2026-10-26T05:25:00.000000Z\",\n        \"updated_at\": \"2026-10-26T05:25:00.000000Z\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Inactive Service",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The given data was invalid.\",\n  \"errors\": {\n    \"items.0.service_code\": [\"Service must exist and both service and department must be active.\"]\n  }\n}"
+            },
+            {
+              "name": "422 Duplicate Service Code",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The given data was invalid.\",\n  \"errors\": {\n    \"items.0.service_code\": [\"The items.0.service_code field has a duplicate value.\"],\n    \"items.1.service_code\": [\"The items.1.service_code field has a duplicate value.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders?status=paid&from=2026-01-01&to=2026-12-31&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "status",          "value": "paid" },
+                { "key": "from",            "value": "2026-01-01" },
+                { "key": "to",              "value": "2026-12-31" },
+                { "key": "patient_id",      "value": "1",       "disabled": true },
+                { "key": "service_code",    "value": "LAB-001", "disabled": true },
+                { "key": "department_code", "value": "PATHO",   "disabled": true },
+                { "key": "per_page",        "value": "20" },
+                { "key": "page",            "value": "1",       "disabled": true }
+              ]
+            },
+            "description": "Search and filter orders across the full dataset.\n\n**Filters:**\n- `status`: `paid` or `unpaid`\n- `patient_id`: integer >= 1\n- `from` / `to`: Date range (YYYY-MM-DD), inclusive. `to` must be >= `from`\n- `service_code`: Queries the historical snapshot in order items\n- `department_code`: Queries the department snapshot in order items\n- `per_page`: 1–100 (default 20)\n\nResults sorted by `created_at DESC`, `id DESC`. Toggle optional query params as needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Orders by Service & Department",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders?service_code=LAB-001&department_code=PATHO&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "service_code",    "value": "LAB-001" },
+                { "key": "department_code", "value": "PATHO" },
+                { "key": "per_page",        "value": "20" }
+              ]
+            },
+            "description": "Filter orders that include a specific service code or department. Uses EXISTS subquery so orders with multiple matching items are never duplicated in results."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "description": "Pay orders with full idempotency and concurrency protection.\n\nThe `Idempotency-Key` header is **required** on all pay requests. It must be globally unique across all payments.",
+      "item": [
+        {
+          "name": "Pay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",           "value": "application/json" },
+              { "key": "Content-Type",     "value": "application/json" },
+              { "key": "Idempotency-Key",  "value": "pay-order-{{order_id}}-v1", "description": "Required. Change this value for each new payment attempt." }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "pay"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Pay an order.\n\n**Required header:** `Idempotency-Key` (1–128 chars: letters, digits, `.`, `_`, `:`, `-`)\n\n**Do NOT send `amount`** — taken from order total automatically.\n\n**Returns:**\n- `201` + `replayed: false` — new payment created\n- `200` + `replayed: true` — same key retried, original payment returned\n- `409` — order already paid with a different key, or key belongs to another order"
+          },
+          "response": [
+            {
+              "name": "201 Payment Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 10,\n    \"order_id\": 42,\n    \"idempotency_key\": \"pay-order-42-v1\",\n    \"amount\": \"2200.00\",\n    \"status\": \"succeeded\",\n    \"created_at\": \"2026-10-26T05:30:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:30:00.000000Z\"\n  },\n  \"replayed\": false\n}"
+            },
+            {
+              "name": "200 Idempotent Replay",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"id\": 10,\n    \"order_id\": 42,\n    \"idempotency_key\": \"pay-order-42-v1\",\n    \"amount\": \"2200.00\",\n    \"status\": \"succeeded\",\n    \"created_at\": \"2026-10-26T05:30:00.000000Z\",\n    \"updated_at\": \"2026-10-26T05:30:00.000000Z\"\n  },\n  \"replayed\": true\n}"
+            },
+            {
+              "name": "409 Already Paid",
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Order is already paid with a different idempotency key.\"\n}"
+            },
+            {
+              "name": "409 Key Used on Another Order",
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Idempotency key belongs to a different order.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Pay Order — Idempotent Retry (Fixed Key)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",          "value": "application/json" },
+              { "key": "Content-Type",    "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "fixed-key-for-retry-test", "description": "Use the SAME key as a previous pay request to test idempotency." }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "pay"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Use the **same** `Idempotency-Key` as a previous Pay Order request to verify idempotent replay. Should return `200` with `replayed: true` and the original payment data."
+          },
+          "response": []
+        },
+        {
+          "name": "Pay Order — Simulate Rollback Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",          "value": "application/json" },
+              { "key": "Content-Type",    "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "simulate-fail-key-001" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "pay"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"simulate_failure\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "**Dev/testing only.** Simulates a failure after the payment record is inserted but before the transaction commits.\n\n**Prerequisite:** Set `PAYMENT_FAILURE_SIMULATION=true` in `.env` (only works in `local`/`testing` environments).\n\nExpected result:\n- Returns `500`\n- Order remains `unpaid`\n- No payment, outbox row, or department work created (full rollback)\n\nAfter this, retry with the same key and no `simulate_failure` to confirm the key is still usable."
+          },
+          "response": [
+            {
+              "name": "500 Simulated Failure",
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"Simulated failure after payment insert.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Pay Without Idempotency Key (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "pay"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Demonstrates that the `Idempotency-Key` header is required. Expects a `422` response."
+          },
+          "response": [
+            {
+              "name": "422 Missing Key",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The given data was invalid.\",\n  \"errors\": {\n    \"idempotency_key\": [\"The idempotency key field is required.\"]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "description": "Sample requests that demonstrate validation and business rule rejections.",
+      "item": [
+        {
+          "name": "Order — Client Price Rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"items\": [\n    {\"service_code\": \"LAB-001\", \"quantity\": 1, \"unit_price\": \"1.00\"}\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sending `unit_price` inside an item is rejected with 422. The server always looks up prices from the service master."
+          },
+          "response": [
+            {
+              "name": "422 Client Price Rejected",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"message\": \"The given data was invalid.\",\n  \"errors\": {\n    \"items.0.unit_price\": [\"The items.0.unit_price field is not allowed.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Order — Duplicate Service Codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"items\": [\n    {\"service_code\": \"LAB-001\", \"quantity\": 1},\n    {\"service_code\": \"LAB-001\", \"quantity\": 2}\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sending the same service_code more than once in a single order is rejected. Expects 422."
+          },
+          "response": []
+        },
+        {
+          "name": "Order — Invalid Quantity (Float)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"items\": [\n    {\"service_code\": \"LAB-001\", \"quantity\": 1.5}\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Quantity must be a JSON integer. Floats (1.5), strings (\"2\"), and booleans are all rejected."
+          },
+          "response": []
+        },
+        {
+          "name": "Order — Quantity Out of Range",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"items\": [\n    {\"service_code\": \"LAB-001\", \"quantity\": 11}\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Maximum quantity per item is 10. Quantity 0 or negative is also rejected."
+          },
+          "response": []
+        },
+        {
+          "name": "Service — Zero Price Rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services", "host": ["{{base_url}}"], "path": ["api", "services"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_code\": \"FREE-001\",\n  \"name\": \"Free Service\",\n  \"department_id\": 1,\n  \"unit_price\": \"0.00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "A service price must be greater than 0. Expects 422."
+          },
+          "response": []
+        },
+        {
+          "name": "Service — Inactive Department Rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept",       "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services", "host": ["{{base_url}}"], "path": ["api", "services"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_code\": \"NEW-001\",\n  \"name\": \"Some Service\",\n  \"department_id\": 999,\n  \"unit_price\": \"100.00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Services must be linked to an existing, active department. Expects 422 if department is inactive or doesn't exist."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Orders — Invalid Date Range",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders?from=2026-12-31&to=2026-01-01",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "from", "value": "2026-12-31" },
+                { "key": "to",   "value": "2026-01-01" }
+              ]
+            },
+            "description": "The `to` date must be >= `from`. This request expects 422."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -21,5 +21,10 @@ class DatabaseSeeder extends Seeder
                 'department_id' => DB::table('departments')->where('code', $code)->value('id'),
                 'unit_price' => $price, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         }
+
+        // Trigger heavy dataset generation if configured via environment or flag
+        if (env('SEED_HEAVY_DATASET', false) && !app()->environment('testing')) {
+            $this->command?->call('dataset:generate', ['--patients' => 500000, '--turbo' => true]);
+        }
     }
 }
